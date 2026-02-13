@@ -1,12 +1,13 @@
 class Api::V1::UsersController < ApplicationController
+  before_action :set_user, only: [:show, :update, :destroy]
+
 	def index
     users = User.all
     render json: users
   end
 
   def show
-    user = User.find(params[:id])
-    render json: user
+    render json: @user
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'User not found' }, status: :not_found
   end
@@ -20,9 +21,29 @@ class Api::V1::UsersController < ApplicationController
     end
   end
 
+  def update
+    if @user.update(user_params)
+      render json: @user
+    else
+      render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  # DELETE /api/v1/users/:id
+  def destroy
+    @user.destroy
+    head :no_content
+  end
+
   private
 
   def user_params
     params.require(:user).permit(:username, :email)
+  end
+
+  def set_user
+    @user = User.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'User not found' }, status: :not_found
   end
 end
